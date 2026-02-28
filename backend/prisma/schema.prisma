@@ -1,0 +1,182 @@
+// Prisma Schema for NeuroNest
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PARENT
+  CHILD
+  ADMIN
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+enum AlertType {
+  SCREEN_TIME_LIMIT
+  ADDICTION_RISK
+  CYBERBULLYING
+  FOCUS_VIOLATION
+  SYSTEM
+}
+
+enum Severity {
+  INFO
+  WARNING
+  DANGER
+  CRITICAL
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  role          Role      @default(PARENT)
+  avatar        String?
+  otpCode       String?
+  otpExpiry     DateTime?
+  biometricKey  String?
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  children      Child[]
+  alerts        Alert[]
+
+  @@map("users")
+}
+
+model Child {
+  id              String    @id @default(uuid())
+  parentId        String
+  name            String
+  age             Int
+  avatar          String?
+  deviceId        String?
+  dailyLimitMin   Int       @default(120)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  parent          User      @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  screenTimeLogs  ScreenTimeLog[]
+  addictionScores AddictionScore[]
+  focusSessions   FocusSession[]
+  gamification    GamificationProfile?
+  cyberbullyingReports CyberbullyingReport[]
+  alerts          Alert[]
+
+  @@map("children")
+}
+
+model ScreenTimeLog {
+  id              String    @id @default(uuid())
+  childId         String
+  appName         String
+  category        String    @default("other")
+  durationMinutes Int
+  date            DateTime  @db.Date
+  hour            Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, date])
+  @@map("screen_time_logs")
+}
+
+model AddictionScore {
+  id              String    @id @default(uuid())
+  childId         String
+  score           Float
+  riskLevel       RiskLevel
+  explanation     String    @db.Text
+  factors         Json
+  createdAt       DateTime  @default(now())
+
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt])
+  @@map("addiction_scores")
+}
+
+model FocusSession {
+  id              String    @id @default(uuid())
+  childId         String
+  name            String    @default("Study Time")
+  schedule        Json
+  blockedApps     Json
+  isActive        Boolean   @default(true)
+  startTime       DateTime?
+  endTime         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("focus_sessions")
+}
+
+model GamificationProfile {
+  id              String    @id @default(uuid())
+  childId         String    @unique
+  points          Int       @default(0)
+  streak          Int       @default(0)
+  longestStreak   Int       @default(0)
+  level           Int       @default(1)
+  badges          Json      @default("[]")
+  lastActiveDate  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("gamification_profiles")
+}
+
+model CyberbullyingReport {
+  id              String    @id @default(uuid())
+  childId         String
+  riskScore       Float
+  category        String
+  detectedTexts   Json
+  sentiment       String?
+  isEncrypted     Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt])
+  @@map("cyberbullying_reports")
+}
+
+model Alert {
+  id              String    @id @default(uuid())
+  userId          String?
+  childId         String?
+  type            AlertType
+  severity        Severity  @default(INFO)
+  title           String
+  message         String    @db.Text
+  isRead          Boolean   @default(false)
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child           Child?    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([childId, createdAt])
+  @@map("alerts")
+}
