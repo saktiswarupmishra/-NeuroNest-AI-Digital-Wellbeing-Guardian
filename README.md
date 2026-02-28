@@ -4,6 +4,9 @@
     <strong>A secure, AI-powered cross-platform mobile application that monitors children's digital wellbeing, detects addiction patterns and cyberbullying, and empowers parents with real-time insights and actionable controls.</strong>
   </p>
   <p align="center">
+    <em>Developed by <strong>Sakti Swarup Mishra</strong></em>
+  </p>
+  <p align="center">
     <a href="#features">Features</a> •
     <a href="#architecture">Architecture</a> •
     <a href="#tech-stack">Tech Stack</a> •
@@ -400,7 +403,7 @@ NeuroNest is designed as a supplementary tool for digital wellbeing monitoring. 
 
 <p align="center">
 
-  **Copyright © 2025 NeuroNest. All rights reserved.**
+  **Copyright © 2025 Sakti Swarup Mishra. All rights reserved.**
 
   Built with ❤️ for safer digital childhoods.
 
